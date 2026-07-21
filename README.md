@@ -39,19 +39,14 @@ liability for misuse. See [LICENSE](LICENSE).
 
 ## Setup
 
-### 1. Create a Telegram bot
+Everything is done **inside the app** — a built-in step-by-step wizard walks
+you through it, with buttons that open the right Telegram bots for you. No
+technical knowledge required.
 
-1. Open Telegram and message [@BotFather](https://t.me/BotFather).
-2. Send `/newbot` and follow the prompts to get a **bot token**
-   (looks like `123456789:ABCdef...`).
-3. Send any message to your new bot so it can message you back.
-4. Get your **chat ID**: message [@userinfobot](https://t.me/userinfobot), or
-   open `https://api.telegram.org/bot<YOUR_TOKEN>/getUpdates` in a browser after
-   messaging your bot and read the `chat.id` value.
+### 1. Install the app
 
-### 2. Install the app
-
-Build from source (see below) or grab a release APK, then sideload it:
+Grab the APK from the [Releases](../../releases) page (or build from source,
+see below) and sideload it:
 
 ```bash
 adb install NotificationForwarder.apk
@@ -59,15 +54,20 @@ adb install NotificationForwarder.apk
 
 You may need to enable "Install unknown apps" for your file manager/browser.
 
-### 3. Configure and grant access
+### 2. Follow the in-app wizard
 
-Open the app, then:
+Open the app and work down the numbered cards:
 
-1. Enter your **bot token** and **chat ID**, and tap **Save Telegram Settings**.
-2. Tap **Grant SMS & Call Permissions** and allow them.
-3. Tap **Enable Notification Access** and toggle the app on in the system screen.
-4. Tap **Start Forwarder Service**.
-5. Tap **Send Test Message to Telegram** to confirm it works.
+1. **Create your bot** — tap **Open BotFather**, send `/newbot`, and paste the
+   token it gives you back into the app.
+2. **Get your Chat ID** — tap **Get my Chat ID** (opens `@userinfobot`), press
+   START, and paste the number it replies with.
+3. **Save Settings.**
+4. **Allow access** — grant SMS/call permissions and enable Notification Access.
+5. **Start forwarding** and tap **Send Test Message** to confirm it works.
+
+Each user configures their **own** bot, so messages only ever go to a Telegram
+chat you control.
 
 ## Building from source
 

@@ -2,17 +2,18 @@ package com.notificationforwarder;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.text.InputType;
 import android.text.TextUtils;
-import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -32,6 +33,8 @@ public class MainActivity extends Activity {
     private static final int CARD_INPUT  = 0xFF262645;
     private static final int ACCENT      = 0xFF6C5CE7;
     private static final int ACCENT_DK   = 0xFF4B3FC4;
+    private static final int TG_BLUE     = 0xFF2AABEE;
+    private static final int TG_BLUE_DK  = 0xFF1E86BC;
     private static final int TEXT        = 0xFFF5F5FA;
     private static final int TEXT_MUTED  = 0xFF9A9AB5;
     private static final int OK_GREEN    = 0xFF2ECC71;
@@ -72,50 +75,75 @@ public class MainActivity extends Activity {
 
         root.addView(gap(24));
 
-        // ---------------- Config card ----------------
-        LinearLayout configCard = card();
-        configCard.addView(cardHeading("⚙️  Telegram Setup"));
+        // ================= STEP 1: Create bot =================
+        LinearLayout step1 = card();
+        step1.addView(stepHeading(1, "Create your Telegram bot"));
+        step1.addView(helpText(
+                "Tap the button below to open @BotFather in Telegram. "
+                + "Send it /newbot, pick any name, and it will reply with a "
+                + "token that looks like 123456789:ABC…\n\nCopy that token and "
+                + "paste it here."));
+        step1.addView(gap(12));
+        Button botFatherBtn = telegramButton("Open BotFather");
+        botFatherBtn.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) { openTelegram("BotFather"); }
+        });
+        step1.addView(botFatherBtn);
 
-        configCard.addView(fieldLabel("Bot token (from @BotFather)"));
+        step1.addView(fieldLabel("Paste your bot token"));
         tokenInput = input("123456789:ABC...");
-        configCard.addView(tokenInput);
+        step1.addView(tokenInput);
+        root.addView(step1);
 
-        configCard.addView(fieldLabel("Chat ID"));
-        chatIdInput = input("Your numeric Telegram ID");
-        configCard.addView(chatIdInput);
+        root.addView(gap(16));
+
+        // ================= STEP 2: Chat ID =================
+        LinearLayout step2 = card();
+        step2.addView(stepHeading(2, "Get your Chat ID"));
+        step2.addView(helpText(
+                "Tap below to open @userinfobot in Telegram. Press START and it "
+                + "will instantly reply with your numeric ID (e.g. 123456789).\n\n"
+                + "Copy that number and paste it here."));
+        step2.addView(gap(12));
+        Button chatIdBtn = telegramButton("Get my Chat ID");
+        chatIdBtn.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) { openTelegram("userinfobot"); }
+        });
+        step2.addView(chatIdBtn);
+
+        step2.addView(fieldLabel("Paste your Chat ID"));
+        chatIdInput = input("123456789");
+        chatIdInput.setInputType(InputType.TYPE_CLASS_NUMBER);
+        step2.addView(chatIdInput);
+        root.addView(step2);
 
         tokenInput.setText(TelegramSender.getBotToken(this));
         chatIdInput.setText(TelegramSender.getChatId(this));
 
-        configCard.addView(gap(16));
-        Button saveBtn = primaryButton("Save Settings");
+        root.addView(gap(16));
+
+        // ================= STEP 3: Save =================
+        LinearLayout step3 = card();
+        step3.addView(stepHeading(3, "Save your settings"));
+        step3.addView(gap(10));
+        Button saveBtn = primaryButton("💾  Save Settings");
         saveBtn.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) { onSave(); }
         });
-        configCard.addView(saveBtn);
-        root.addView(configCard);
+        step3.addView(saveBtn);
+        root.addView(step3);
 
         root.addView(gap(16));
 
-        // ---------------- Status card ----------------
-        LinearLayout statusCard = card();
-        statusCard.addView(cardHeading("📊  Status"));
-        statusText = new TextView(this);
-        statusText.setTextSize(15);
-        statusText.setTextColor(TEXT);
-        statusText.setLineSpacing(dp(6), 1f);
-        statusText.setPadding(0, dp(8), 0, 0);
-        statusCard.addView(statusText);
-        root.addView(statusCard);
+        // ================= STEP 4: Permissions =================
+        LinearLayout step4 = card();
+        step4.addView(stepHeading(4, "Allow access on your phone"));
+        step4.addView(helpText(
+                "The app needs permission to read incoming messages, calls and "
+                + "notifications so it can forward them."));
+        step4.addView(gap(12));
 
-        root.addView(gap(16));
-
-        // ---------------- Actions card ----------------
-        LinearLayout actionsCard = card();
-        actionsCard.addView(cardHeading("🔐  Setup Steps"));
-
-        actionsCard.addView(gap(4));
-        Button permBtn = secondaryButton("1 · Grant SMS & Call Permissions");
+        Button permBtn = secondaryButton("Grant SMS & Call Permissions");
         permBtn.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) {
                 requestPermissions(new String[]{
@@ -128,36 +156,53 @@ public class MainActivity extends Activity {
                 }, PERMISSION_REQUEST);
             }
         });
-        actionsCard.addView(permBtn);
+        step4.addView(permBtn);
 
-        actionsCard.addView(gap(10));
-        Button notifBtn = secondaryButton("2 · Enable Notification Access");
+        step4.addView(gap(10));
+        Button notifBtn = secondaryButton("Enable Notification Access");
         notifBtn.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) {
                 startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
             }
         });
-        actionsCard.addView(notifBtn);
+        step4.addView(notifBtn);
+        root.addView(step4);
 
-        actionsCard.addView(gap(10));
-        Button startBtn = secondaryButton("3 · Start Forwarder Service");
+        root.addView(gap(16));
+
+        // ================= STEP 5: Start & test =================
+        LinearLayout step5 = card();
+        step5.addView(stepHeading(5, "Start forwarding"));
+        step5.addView(gap(10));
+        Button startBtn = secondaryButton("Start Forwarder Service");
         startBtn.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) {
                 startForegroundService(new Intent(MainActivity.this, ForwarderService.class));
                 updateStatus();
             }
         });
-        actionsCard.addView(startBtn);
-        root.addView(actionsCard);
+        step5.addView(startBtn);
 
-        root.addView(gap(16));
-
-        // ---------------- Test button ----------------
+        step5.addView(gap(10));
         Button testBtn = primaryButton("✈  Send Test Message");
         testBtn.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) { onTest(); }
         });
-        root.addView(testBtn);
+        step5.addView(testBtn);
+        root.addView(step5);
+
+        root.addView(gap(16));
+
+        // ================= Status =================
+        LinearLayout statusCard = card();
+        statusCard.addView(cardHeading("📊  Status"));
+        statusText = new TextView(this);
+        statusText.setTextSize(15);
+        statusText.setTextColor(TEXT);
+        statusText.setLineSpacing(dp(6), 1f);
+        statusText.setPadding(0, dp(8), 0, 0);
+        statusCard.addView(statusText);
+        root.addView(statusCard);
 
         scroll.addView(root);
         setContentView(scroll);
@@ -170,15 +215,30 @@ public class MainActivity extends Activity {
 
     // ---------------- Actions ----------------
 
+    /** Opens a Telegram username in the Telegram app, falling back to the browser. */
+    private void openTelegram(String username) {
+        try {
+            Intent app = new Intent(Intent.ACTION_VIEW, Uri.parse("tg://resolve?domain=" + username));
+            startActivity(app);
+        } catch (ActivityNotFoundException e) {
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW,
+                        Uri.parse("https://t.me/" + username)));
+            } catch (Exception ex) {
+                toast("Couldn't open Telegram. Install it, then try again.");
+            }
+        }
+    }
+
     private void onSave() {
         String token = tokenInput.getText().toString().trim();
         String chatId = chatIdInput.getText().toString().trim();
         if (token.isEmpty() || chatId.isEmpty()) {
-            toast("Enter both a bot token and a chat ID");
+            toast("Paste both a bot token and a chat ID first");
             return;
         }
         TelegramSender.saveConfig(this, token, chatId);
-        toast("Settings saved");
+        toast("Settings saved ✓");
         updateStatus();
     }
 
@@ -191,7 +251,8 @@ public class MainActivity extends Activity {
                 "✅ <b>Notification Forwarder</b> is working!\nTest message from your phone.");
         new AlertDialog.Builder(this)
                 .setTitle("Test Sent")
-                .setMessage("Check your Telegram for the test message!")
+                .setMessage("Check your Telegram — you should see a test message. "
+                        + "If not, double-check your token and Chat ID.")
                 .setPositiveButton("OK", null)
                 .show();
     }
@@ -221,7 +282,7 @@ public class MainActivity extends Activity {
 
     private CharSequence statusRow(String label, boolean ok) {
         android.text.SpannableString s =
-                new android.text.SpannableString((ok ? "● " : "● ") + label + "\n");
+                new android.text.SpannableString("● " + label + "\n");
         s.setSpan(new android.text.style.ForegroundColorSpan(ok ? OK_GREEN : WARN_RED),
                 0, 1, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         return s;
@@ -268,6 +329,47 @@ public class MainActivity extends Activity {
         return t;
     }
 
+    /** A heading with a circular numbered badge, e.g. "① Create your bot". */
+    private LinearLayout stepHeading(int number, String text) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+
+        TextView badge = new TextView(this);
+        badge.setText(String.valueOf(number));
+        badge.setTextColor(Color.WHITE);
+        badge.setTextSize(15);
+        badge.setTypeface(Typeface.DEFAULT_BOLD);
+        badge.setGravity(android.view.Gravity.CENTER);
+        int size = dp(28);
+        badge.setWidth(size);
+        badge.setHeight(size);
+        GradientDrawable circle = new GradientDrawable();
+        circle.setShape(GradientDrawable.OVAL);
+        circle.setColor(ACCENT);
+        badge.setBackground(circle);
+        row.addView(badge);
+
+        TextView t = new TextView(this);
+        t.setText("  " + text);
+        t.setTextSize(17);
+        t.setTextColor(TEXT);
+        t.setTypeface(Typeface.DEFAULT_BOLD);
+        t.setPadding(dp(8), 0, 0, 0);
+        row.addView(t);
+        return row;
+    }
+
+    private TextView helpText(String text) {
+        TextView t = new TextView(this);
+        t.setText(text);
+        t.setTextSize(13);
+        t.setTextColor(TEXT_MUTED);
+        t.setLineSpacing(dp(4), 1f);
+        t.setPadding(0, dp(10), 0, 0);
+        return t;
+    }
+
     private TextView fieldLabel(String text) {
         TextView t = new TextView(this);
         t.setText(text);
@@ -300,6 +402,10 @@ public class MainActivity extends Activity {
 
     private Button secondaryButton(String text) {
         return styledButton(text, CARD_INPUT, 0xFF33335A, TEXT);
+    }
+
+    private Button telegramButton(String text) {
+        return styledButton("✈  " + text, TG_BLUE, TG_BLUE_DK, Color.WHITE);
     }
 
     private Button styledButton(String text, int fill, int pressed, int textColor) {
