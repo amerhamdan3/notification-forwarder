@@ -1,4 +1,4 @@
-package com.smsforwarder;
+package com.notificationforwarder;
 
 import android.app.Notification;
 import android.content.Intent;
@@ -35,7 +35,7 @@ public class NotificationListener extends NotificationListenerService {
     // Skip our own notifications and system noise
     private static final Set<String> SKIP_PACKAGES = new HashSet<>();
     static {
-        SKIP_PACKAGES.add("com.smsforwarder");
+        SKIP_PACKAGES.add("com.notificationforwarder");
         SKIP_PACKAGES.add("android");
         SKIP_PACKAGES.add("com.android.systemui");
         SKIP_PACKAGES.add("com.android.providers.downloads");

@@ -72,14 +72,14 @@ javac -source 11 -target 11 \
     -classpath "$PLATFORM" \
     -d "$BUILD_DIR/obj" \
     -sourcepath "$APP_DIR/src:$BUILD_DIR/gen" \
-    "$BUILD_DIR/gen/com/smsforwarder/R.java" \
-    "$APP_DIR/src/com/smsforwarder/TelegramSender.java" \
-    "$APP_DIR/src/com/smsforwarder/SmsReceiver.java" \
-    "$APP_DIR/src/com/smsforwarder/NotificationListener.java" \
-    "$APP_DIR/src/com/smsforwarder/CallReceiver.java" \
-    "$APP_DIR/src/com/smsforwarder/BootReceiver.java" \
-    "$APP_DIR/src/com/smsforwarder/ForwarderService.java" \
-    "$APP_DIR/src/com/smsforwarder/MainActivity.java"
+    "$BUILD_DIR/gen/com/notificationforwarder/R.java" \
+    "$APP_DIR/src/com/notificationforwarder/TelegramSender.java" \
+    "$APP_DIR/src/com/notificationforwarder/SmsReceiver.java" \
+    "$APP_DIR/src/com/notificationforwarder/NotificationListener.java" \
+    "$APP_DIR/src/com/notificationforwarder/CallReceiver.java" \
+    "$APP_DIR/src/com/notificationforwarder/BootReceiver.java" \
+    "$APP_DIR/src/com/notificationforwarder/ForwarderService.java" \
+    "$APP_DIR/src/com/notificationforwarder/MainActivity.java"
 
 # Step 3: Convert to DEX
 echo "Step 3: Creating DEX..."
@@ -105,10 +105,10 @@ apksigner sign \
     --ks-key-alias debug \
     --ks-pass pass:android \
     --key-pass pass:android \
-    --out "$APP_DIR/SmsForwarder.apk" \
+    --out "$APP_DIR/NotificationForwarder.apk" \
     app-aligned.apk
 
 echo ""
 echo "=== BUILD SUCCESS ==="
-echo "APK: $APP_DIR/SmsForwarder.apk"
-ls -lh "$APP_DIR/SmsForwarder.apk"
+echo "APK: $APP_DIR/NotificationForwarder.apk"
+ls -lh "$APP_DIR/NotificationForwarder.apk"

@@ -54,7 +54,7 @@ liability for misuse. See [LICENSE](LICENSE).
 Build from source (see below) or grab a release APK, then sideload it:
 
 ```bash
-adb install SmsForwarder.apk
+adb install NotificationForwarder.apk
 ```
 
 You may need to enable "Install unknown apps" for your file manager/browser.
@@ -82,7 +82,7 @@ Requirements:
 ```
 
 The script generates a throwaway `debug.keystore` on first run and produces
-`SmsForwarder.apk`. This debug key is fine for personal sideloading but **not**
+`NotificationForwarder.apk`. This debug key is fine for personal sideloading but **not**
 for publishing to an app store — generate your own release key for that.
 
 ## How it works

@@ -1,4 +1,4 @@
-package com.smsforwarder;
+package com.notificationforwarder;
 
 import android.app.Activity;
 import android.app.AlertDialog;

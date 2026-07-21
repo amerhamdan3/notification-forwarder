@@ -1,4 +1,4 @@
-package com.smsforwarder;
+package com.notificationforwarder;
 
 import android.content.Context;
 import android.content.SharedPreferences;

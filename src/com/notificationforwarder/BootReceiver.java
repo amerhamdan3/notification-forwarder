@@ -1,4 +1,4 @@
-package com.smsforwarder;
+package com.notificationforwarder;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
