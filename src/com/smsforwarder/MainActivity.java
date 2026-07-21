@@ -5,134 +5,119 @@ import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-import android.widget.ScrollView;
-import android.widget.Toast;
-import android.Manifest;
-import android.graphics.Color;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.view.Gravity;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.TextView;
+import android.widget.Toast;
+import android.Manifest;
 
 public class MainActivity extends Activity {
     private static final int PERMISSION_REQUEST = 100;
+
+    // Palette
+    private static final int BG          = 0xFF0F0F1E;
+    private static final int CARD        = 0xFF1C1C33;
+    private static final int CARD_INPUT  = 0xFF262645;
+    private static final int ACCENT      = 0xFF6C5CE7;
+    private static final int ACCENT_DK   = 0xFF4B3FC4;
+    private static final int TEXT        = 0xFFF5F5FA;
+    private static final int TEXT_MUTED  = 0xFF9A9AB5;
+    private static final int OK_GREEN    = 0xFF2ECC71;
+    private static final int WARN_RED    = 0xFFFF6B6B;
+
     private TextView statusText;
     private EditText tokenInput;
     private EditText chatIdInput;
+    private float density;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        density = getResources().getDisplayMetrics().density;
 
         ScrollView scroll = new ScrollView(this);
-        scroll.setBackgroundColor(Color.parseColor("#1a1a2e"));
+        scroll.setBackgroundColor(BG);
+        scroll.setFillViewport(true);
 
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(60, 80, 60, 80);
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(20), dp(36), dp(20), dp(36));
 
-        // Title
+        // ---------------- Header ----------------
         TextView title = new TextView(this);
-        title.setText("📨 SMS, Call & Notification Forwarder");
-        title.setTextSize(22);
-        title.setTextColor(Color.WHITE);
-        title.setGravity(Gravity.CENTER);
-        layout.addView(title);
+        title.setText("Notification Forwarder");
+        title.setTextSize(26);
+        title.setTextColor(TEXT);
+        title.setTypeface(Typeface.DEFAULT_BOLD);
+        root.addView(title);
 
-        // Spacer
-        layout.addView(spacer(40));
+        TextView subtitle = new TextView(this);
+        subtitle.setText("Forward SMS, calls & notifications to your Telegram");
+        subtitle.setTextSize(14);
+        subtitle.setTextColor(TEXT_MUTED);
+        subtitle.setPadding(0, dp(6), 0, 0);
+        root.addView(subtitle);
 
-        // --- Telegram configuration ---
-        TextView configLabel = new TextView(this);
-        configLabel.setText("Telegram configuration");
-        configLabel.setTextSize(15);
-        configLabel.setTextColor(Color.WHITE);
-        layout.addView(configLabel);
+        root.addView(gap(24));
 
-        TextView tokenLabel = new TextView(this);
-        tokenLabel.setText("Bot token (from @BotFather)");
-        tokenLabel.setTextSize(13);
-        tokenLabel.setTextColor(Color.parseColor("#aaaaaa"));
-        tokenLabel.setPadding(0, 20, 0, 6);
-        layout.addView(tokenLabel);
+        // ---------------- Config card ----------------
+        LinearLayout configCard = card();
+        configCard.addView(cardHeading("⚙️  Telegram Setup"));
 
-        tokenInput = new EditText(this);
-        tokenInput.setHint("123456789:ABC...");
-        tokenInput.setTextColor(Color.WHITE);
-        tokenInput.setHintTextColor(Color.parseColor("#666666"));
-        tokenInput.setInputType(InputType.TYPE_CLASS_TEXT
-                | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
-        tokenInput.setSingleLine(true);
-        layout.addView(tokenInput);
+        configCard.addView(fieldLabel("Bot token (from @BotFather)"));
+        tokenInput = input("123456789:ABC...");
+        configCard.addView(tokenInput);
 
-        TextView chatLabel = new TextView(this);
-        chatLabel.setText("Chat ID (your numeric Telegram ID or channel)");
-        chatLabel.setTextSize(13);
-        chatLabel.setTextColor(Color.parseColor("#aaaaaa"));
-        chatLabel.setPadding(0, 20, 0, 6);
-        layout.addView(chatLabel);
+        configCard.addView(fieldLabel("Chat ID"));
+        chatIdInput = input("Your numeric Telegram ID");
+        configCard.addView(chatIdInput);
 
-        chatIdInput = new EditText(this);
-        chatIdInput.setHint("123456789");
-        chatIdInput.setTextColor(Color.WHITE);
-        chatIdInput.setHintTextColor(Color.parseColor("#666666"));
-        chatIdInput.setInputType(InputType.TYPE_CLASS_TEXT
-                | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
-        chatIdInput.setSingleLine(true);
-        layout.addView(chatIdInput);
-
-        // Prefill with any saved values
         tokenInput.setText(TelegramSender.getBotToken(this));
         chatIdInput.setText(TelegramSender.getChatId(this));
 
-        layout.addView(spacer(16));
-
-        Button saveBtn = new Button(this);
-        saveBtn.setText("Save Telegram Settings");
-        saveBtn.setTextSize(16);
+        configCard.addView(gap(16));
+        Button saveBtn = primaryButton("Save Settings");
         saveBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String token = tokenInput.getText().toString().trim();
-                String chatId = chatIdInput.getText().toString().trim();
-                if (token.isEmpty() || chatId.isEmpty()) {
-                    Toast.makeText(MainActivity.this,
-                            "Enter both a bot token and a chat ID",
-                            Toast.LENGTH_LONG).show();
-                    return;
-                }
-                TelegramSender.saveConfig(MainActivity.this, token, chatId);
-                Toast.makeText(MainActivity.this, "Settings saved",
-                        Toast.LENGTH_SHORT).show();
-                updateStatus();
-            }
+            @Override public void onClick(View v) { onSave(); }
         });
-        layout.addView(saveBtn);
+        configCard.addView(saveBtn);
+        root.addView(configCard);
 
-        layout.addView(spacer(40));
+        root.addView(gap(16));
 
-        // Status
+        // ---------------- Status card ----------------
+        LinearLayout statusCard = card();
+        statusCard.addView(cardHeading("📊  Status"));
         statusText = new TextView(this);
-        statusText.setTextSize(16);
-        statusText.setTextColor(Color.parseColor("#aaaaaa"));
-        statusText.setPadding(0, 20, 0, 20);
-        layout.addView(statusText);
+        statusText.setTextSize(15);
+        statusText.setTextColor(TEXT);
+        statusText.setLineSpacing(dp(6), 1f);
+        statusText.setPadding(0, dp(8), 0, 0);
+        statusCard.addView(statusText);
+        root.addView(statusCard);
 
-        layout.addView(spacer(30));
+        root.addView(gap(16));
 
-        // Grant Permissions Button
-        Button permBtn = new Button(this);
-        permBtn.setText("Grant SMS & Call Permissions");
-        permBtn.setTextSize(16);
+        // ---------------- Actions card ----------------
+        LinearLayout actionsCard = card();
+        actionsCard.addView(cardHeading("🔐  Setup Steps"));
+
+        actionsCard.addView(gap(4));
+        Button permBtn = secondaryButton("1 · Grant SMS & Call Permissions");
         permBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+            @Override public void onClick(View v) {
                 requestPermissions(new String[]{
                         Manifest.permission.RECEIVE_SMS,
                         Manifest.permission.READ_SMS,
@@ -143,81 +128,72 @@ public class MainActivity extends Activity {
                 }, PERMISSION_REQUEST);
             }
         });
-        layout.addView(permBtn);
+        actionsCard.addView(permBtn);
 
-        layout.addView(spacer(20));
-
-        // Notification Access Button
-        Button notifBtn = new Button(this);
-        notifBtn.setText("Enable Notification Access");
-        notifBtn.setTextSize(16);
+        actionsCard.addView(gap(10));
+        Button notifBtn = secondaryButton("2 · Enable Notification Access");
         notifBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS);
-                startActivity(intent);
+            @Override public void onClick(View v) {
+                startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
             }
         });
-        layout.addView(notifBtn);
+        actionsCard.addView(notifBtn);
 
-        layout.addView(spacer(20));
-
-        // Start Service Button
-        Button startBtn = new Button(this);
-        startBtn.setText("Start Forwarder Service");
-        startBtn.setTextSize(16);
+        actionsCard.addView(gap(10));
+        Button startBtn = secondaryButton("3 · Start Forwarder Service");
         startBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent serviceIntent = new Intent(MainActivity.this, ForwarderService.class);
-                startForegroundService(serviceIntent);
+            @Override public void onClick(View v) {
+                startForegroundService(new Intent(MainActivity.this, ForwarderService.class));
                 updateStatus();
             }
         });
-        layout.addView(startBtn);
+        actionsCard.addView(startBtn);
+        root.addView(actionsCard);
 
-        layout.addView(spacer(20));
+        root.addView(gap(16));
 
-        // Test Button
-        Button testBtn = new Button(this);
-        testBtn.setText("Send Test Message to Telegram");
-        testBtn.setTextSize(16);
+        // ---------------- Test button ----------------
+        Button testBtn = primaryButton("✈  Send Test Message");
         testBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!TelegramSender.isConfigured(MainActivity.this)) {
-                    Toast.makeText(MainActivity.this,
-                            "Save your Telegram settings first",
-                            Toast.LENGTH_LONG).show();
-                    return;
-                }
-                TelegramSender.send(MainActivity.this,
-                        "✅ <b>SMS Forwarder</b> is working!\nTest message from your phone.");
-                new AlertDialog.Builder(MainActivity.this)
-                        .setTitle("Test Sent")
-                        .setMessage("Check your Telegram for the test message!")
-                        .setPositiveButton("OK", null)
-                        .show();
-            }
+            @Override public void onClick(View v) { onTest(); }
         });
-        layout.addView(testBtn);
+        root.addView(testBtn);
 
-        scroll.addView(layout);
+        scroll.addView(root);
         setContentView(scroll);
 
-        // Auto-start forwarder service only once configured
         if (TelegramSender.isConfigured(this)) {
-            Intent serviceIntent = new Intent(this, ForwarderService.class);
-            startForegroundService(serviceIntent);
+            startForegroundService(new Intent(this, ForwarderService.class));
         }
-
         updateStatus();
     }
 
-    private View spacer(int heightPx) {
-        View spacer = new View(this);
-        spacer.setMinimumHeight(heightPx);
-        return spacer;
+    // ---------------- Actions ----------------
+
+    private void onSave() {
+        String token = tokenInput.getText().toString().trim();
+        String chatId = chatIdInput.getText().toString().trim();
+        if (token.isEmpty() || chatId.isEmpty()) {
+            toast("Enter both a bot token and a chat ID");
+            return;
+        }
+        TelegramSender.saveConfig(this, token, chatId);
+        toast("Settings saved");
+        updateStatus();
+    }
+
+    private void onTest() {
+        if (!TelegramSender.isConfigured(this)) {
+            toast("Save your Telegram settings first");
+            return;
+        }
+        TelegramSender.send(this,
+                "✅ <b>Notification Forwarder</b> is working!\nTest message from your phone.");
+        new AlertDialog.Builder(this)
+                .setTitle("Test Sent")
+                .setMessage("Check your Telegram for the test message!")
+                .setPositiveButton("OK", null)
+                .show();
     }
 
     @Override
@@ -227,46 +203,37 @@ public class MainActivity extends Activity {
     }
 
     private void updateStatus() {
-        StringBuilder sb = new StringBuilder();
+        statusText.setText(TextUtils.concat(
+                statusRow("Telegram configured", TelegramSender.isConfigured(this)),
+                statusRow("SMS permission",
+                        granted(Manifest.permission.RECEIVE_SMS)),
+                statusRow("Call permission",
+                        granted(Manifest.permission.READ_PHONE_STATE)),
+                statusRow("Notification access", isNotificationListenerEnabled()),
+                statusRow("Internet permission",
+                        granted(Manifest.permission.INTERNET))
+        ));
+    }
 
-        // Check Telegram configuration
-        boolean configured = TelegramSender.isConfigured(this);
-        sb.append(configured ? "✅" : "❌").append(" Telegram Configured\n");
+    private boolean granted(String perm) {
+        return checkSelfPermission(perm) == PackageManager.PERMISSION_GRANTED;
+    }
 
-        // Check SMS permission
-        boolean hasSms = checkSelfPermission(Manifest.permission.RECEIVE_SMS)
-                == PackageManager.PERMISSION_GRANTED;
-        sb.append(hasSms ? "✅" : "❌").append(" SMS Permission\n");
-
-        // Check call permission
-        boolean hasCall = checkSelfPermission(Manifest.permission.READ_PHONE_STATE)
-                == PackageManager.PERMISSION_GRANTED;
-        sb.append(hasCall ? "✅" : "❌").append(" Call Permission\n");
-
-        // Check notification listener
-        boolean hasNotif = isNotificationListenerEnabled();
-        sb.append(hasNotif ? "✅" : "❌").append(" Notification Access\n");
-
-        // Check internet
-        boolean hasNet = checkSelfPermission(Manifest.permission.INTERNET)
-                == PackageManager.PERMISSION_GRANTED;
-        sb.append(hasNet ? "✅" : "❌").append(" Internet Permission\n");
-
-        sb.append("\n📱 Forwarding to Telegram Bot");
-
-        statusText.setText(sb.toString());
+    private CharSequence statusRow(String label, boolean ok) {
+        android.text.SpannableString s =
+                new android.text.SpannableString((ok ? "● " : "● ") + label + "\n");
+        s.setSpan(new android.text.style.ForegroundColorSpan(ok ? OK_GREEN : WARN_RED),
+                0, 1, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return s;
     }
 
     private boolean isNotificationListenerEnabled() {
         String flat = Settings.Secure.getString(getContentResolver(),
                 "enabled_notification_listeners");
         if (!TextUtils.isEmpty(flat)) {
-            String[] names = flat.split(":");
-            for (String name : names) {
+            for (String name : flat.split(":")) {
                 ComponentName cn = ComponentName.unflattenFromString(name);
-                if (cn != null && cn.getPackageName().equals(getPackageName())) {
-                    return true;
-                }
+                if (cn != null && cn.getPackageName().equals(getPackageName())) return true;
             }
         }
         return false;
@@ -276,5 +243,111 @@ public class MainActivity extends Activity {
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
         super.onRequestPermissionsResult(requestCode, permissions, results);
         updateStatus();
+    }
+
+    // ---------------- UI builders ----------------
+
+    private LinearLayout card() {
+        LinearLayout c = new LinearLayout(this);
+        c.setOrientation(LinearLayout.VERTICAL);
+        c.setPadding(dp(18), dp(18), dp(18), dp(18));
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(CARD);
+        bg.setCornerRadius(dp(18));
+        c.setBackground(bg);
+        return c;
+    }
+
+    private TextView cardHeading(String text) {
+        TextView t = new TextView(this);
+        t.setText(text);
+        t.setTextSize(17);
+        t.setTextColor(TEXT);
+        t.setTypeface(Typeface.DEFAULT_BOLD);
+        t.setPadding(0, 0, 0, dp(4));
+        return t;
+    }
+
+    private TextView fieldLabel(String text) {
+        TextView t = new TextView(this);
+        t.setText(text);
+        t.setTextSize(13);
+        t.setTextColor(TEXT_MUTED);
+        t.setPadding(0, dp(14), 0, dp(6));
+        return t;
+    }
+
+    private EditText input(String hint) {
+        EditText e = new EditText(this);
+        e.setHint(hint);
+        e.setTextColor(TEXT);
+        e.setHintTextColor(0xFF6A6A85);
+        e.setTextSize(15);
+        e.setSingleLine(true);
+        e.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        e.setPadding(dp(14), dp(14), dp(14), dp(14));
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(CARD_INPUT);
+        bg.setCornerRadius(dp(12));
+        e.setBackground(bg);
+        e.setLayoutParams(matchWidth());
+        return e;
+    }
+
+    private Button primaryButton(String text) {
+        return styledButton(text, ACCENT, ACCENT_DK, Color.WHITE);
+    }
+
+    private Button secondaryButton(String text) {
+        return styledButton(text, CARD_INPUT, 0xFF33335A, TEXT);
+    }
+
+    private Button styledButton(String text, int fill, int pressed, int textColor) {
+        Button b = new Button(this);
+        b.setText(text);
+        b.setAllCaps(false);
+        b.setTextSize(15);
+        b.setTextColor(textColor);
+        b.setTypeface(Typeface.DEFAULT_BOLD);
+        b.setStateListAnimator(null);
+
+        GradientDrawable normal = new GradientDrawable();
+        normal.setColor(fill);
+        normal.setCornerRadius(dp(14));
+        GradientDrawable down = new GradientDrawable();
+        down.setColor(pressed);
+        down.setCornerRadius(dp(14));
+
+        android.graphics.drawable.StateListDrawable sld =
+                new android.graphics.drawable.StateListDrawable();
+        sld.addState(new int[]{android.R.attr.state_pressed}, down);
+        sld.addState(new int[]{}, normal);
+        b.setBackground(sld);
+
+        LinearLayout.LayoutParams lp = matchWidth();
+        lp.height = dp(52);
+        b.setLayoutParams(lp);
+        return b;
+    }
+
+    private View gap(int heightDp) {
+        View v = new View(this);
+        v.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(heightDp)));
+        return v;
+    }
+
+    private LinearLayout.LayoutParams matchWidth() {
+        return new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+    }
+
+    private int dp(int v) {
+        return Math.round(v * density);
+    }
+
+    private void toast(String msg) {
+        Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
     }
 }

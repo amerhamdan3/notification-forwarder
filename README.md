@@ -1,4 +1,4 @@
-# SMS Forwarder
+# Notification Forwarder
 
 A small, self-hosted Android app that forwards **your own** phone's incoming
 SMS messages, call events, and app notifications to a Telegram chat that

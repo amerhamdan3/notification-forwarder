@@ -10,7 +10,7 @@ public class BootReceiver extends BroadcastReceiver {
         if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
             Intent serviceIntent = new Intent(context, ForwarderService.class);
             context.startForegroundService(serviceIntent);
-            TelegramSender.send(context, "🔄 Phone rebooted — SMS Forwarder restarted");
+            TelegramSender.send(context, "🔄 Phone rebooted — Notification Forwarder restarted");
         }
     }
 }

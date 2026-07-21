@@ -14,8 +14,8 @@ public class ForwarderService extends Service {
     public void onCreate() {
         super.onCreate();
         NotificationChannel channel = new NotificationChannel(
-                CHANNEL_ID, "SMS Forwarder", NotificationManager.IMPORTANCE_LOW);
-        channel.setDescription("Keeps SMS forwarding active");
+                CHANNEL_ID, "Notification Forwarder", NotificationManager.IMPORTANCE_LOW);
+        channel.setDescription("Keeps forwarding active");
         NotificationManager nm = getSystemService(NotificationManager.class);
         nm.createNotificationChannel(channel);
     }
@@ -23,8 +23,8 @@ public class ForwarderService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Notification notification = new Notification.Builder(this, CHANNEL_ID)
-                .setContentTitle("SMS Forwarder Active")
-                .setContentText("Forwarding SMS & notifications to Telegram")
+                .setContentTitle("Notification Forwarder Active")
+                .setContentText("Forwarding SMS, calls & notifications to Telegram")
                 .setSmallIcon(android.R.drawable.ic_dialog_email)
                 .setOngoing(true)
                 .build();
